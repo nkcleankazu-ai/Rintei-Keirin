@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -13,8 +13,7 @@ type Profile = {
 
 export default function MemberPage() {
   const router = useRouter();
-  const supabase = createClient();
-
+  const supabase = useMemo(() => createClient(), []);
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [message, setMessage] = useState("読み込み中...");
