@@ -1,59 +1,98 @@
+
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+type Profile = {
+  display_name: string | null;
+  coin_balance: number;
+};
 
 export default function MemberPage() {
+  const router = useRouter();
+  const supabase = createClient();
+
+  const [email, setEmail] = useState("");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [message, setMessage] = useState("読み込み中...");
+
+  useEffect(() => {
+    async function loadMember() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      setEmail(user.email ?? "");
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("display_name, coin_balance")
+        .eq("id", user.id)
+        .single();
+
+      if (error) {
+        setMessage("会員情報を読み込めませんでした。");
+        return;
+      }
+
+      setProfile(data);
+      setMessage("");
+    }
+
+    loadMember();
+  }, [router, supabase]);
+
+  async function logout() {
+    await supabase.auth.signOut();
+    router.replace("/login");
+    router.refresh();
+  }
+
   return (
-    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: "25px 18px" }}>
-      <style>{`
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #080808; }
-        .member-wrap { max-width: 850px; margin: auto; }
-        .member-logo { color: #d5ad55; font-size: 23px; font-weight: 900; letter-spacing: 4px; }
-        .member-title { text-align: center; color: #d5ad55; font-size: 30px; letter-spacing: 5px; margin: 60px 0 10px; }
-        .member-sub { text-align: center; color: #aaa293; font-size: 13px; margin-bottom: 35px; }
-        .member-card { background: #12100c; border: 1px solid #514126; padding: 25px; margin: 16px 0; }
-        .member-label { color: #aaa293; font-size: 12px; }
-        .member-value { color: #d5ad55; font-size: 30px; font-weight: bold; margin-top: 12px; }
-        .member-link { display: inline-block; border: 1px solid #806633; color: #d5ad55; padding: 12px 20px; margin: 8px; font-size: 13px; }
-        .member-note { color: #999; font-size: 12px; line-height: 1.9; }
-      `}</style>
-
-      <div className="member-wrap">
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #292319", paddingBottom: 18 }}>
-          <div className="member-logo">輪帝 <span style={{ fontSize: 11 }}>RINTEI</span></div>
-          <Link href="/" style={{ color: "#d5ad55", fontSize: 13 }}>TOPへ戻る</Link>
-        </header>
-
-        <h1 className="member-title">MY PAGE</h1>
-        <p className="member-sub">会員専用ページ</p>
-
-        <section className="member-card">
-          <div className="member-label">保有コイン</div>
-          <div className="member-value">--- COINS</div>
-          <p className="member-note">ログイン・コイン管理機能の接続後に実際の残高を表示します。</p>
-        </section>
-
-        <section className="member-card">
-          <div className="member-label">月額会員プラン</div>
-          <h2 style={{ color: "#d5ad55", margin: "12px 0" }}>STANDARD MEMBER</h2>
-          <div style={{ fontSize: 22, fontWeight: "bold" }}>¥1,980 / 月（税込）</div>
-          <p className="member-note">毎月200コイン付与・未使用コインは翌月へ繰り越し予定</p>
-          <p className="member-note">現在は会員状態を取得できません。</p>
-        </section>
-
-        <section className="member-card">
-          <div className="member-label">購入履歴・利用履歴</div>
-          <p className="member-note" style={{ marginTop: 18 }}>履歴はまだありません。決済・コイン管理機能の接続後に表示します。</p>
-        </section>
-
-        <div style={{ textAlign: "center", padding: "25px 0" }}>
-          <Link href="/free" className="member-link">無料予想</Link>
-          <Link href="/paid" className="member-link">有料予想</Link>
-          <Link href="/login" className="member-link">ログイン</Link>
+    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: 24 }}>
+      <div style={{ maxWidth: 650, margin: "auto" }}>
+        <div style={{ textAlign: "center", color: "#d5ad55", fontSize: 28, fontWeight: 900, letterSpacing: 5, marginTop: 30 }}>
+          輪帝 RINTEI
         </div>
 
-        <p className="member-note" style={{ textAlign: "center" }}>
-          ※現在は画面見本です。会員情報・残高・購入履歴は未接続です。
-        </p>
+        <h1 style={{ color: "#d5ad55", textAlign: "center", marginTop: 45 }}>
+          MEMBER PAGE
+        </h1>
+
+        {message && <p style={{ textAlign: "center" }}>{message}</p>}
+
+        {profile && (
+          <>
+            <section style={{ border: "1px solid #514126", background: "#12100c", padding: 24, marginTop: 25 }}>
+              <p style={{ color: "#999", fontSize: 12 }}>ログイン中のメールアドレス</p>
+              <p>{email}</p>
+              <p style={{ color: "#999", fontSize: 12, marginTop: 25 }}>会員名</p>
+              <p>{profile.display_name || "会員"}</p>
+              <p style={{ color: "#999", fontSize: 12, marginTop: 25 }}>保有コイン</p>
+              <p style={{ color: "#d5ad55", fontSize: 34, fontWeight: 900 }}>
+                {profile.coin_balance.toLocaleString()} COINS
+              </p>
+            </section>
+
+            <div style={{ display: "grid", gap: 12, marginTop: 25 }}>
+              <Link href="/free" style={{ padding: 16, textAlign: "center", background: "#292319", color: "#d5ad55", textDecoration: "none" }}>
+                無料予想を見る
+              </Link>
+              <Link href="/paid" style={{ padding: 16, textAlign: "center", background: "#292319", color: "#d5ad55", textDecoration: "none" }}>
+                有料予想・コイン購入
+              </Link>
+              <button onClick={logout} style={{ padding: 14, background: "#111", color: "white", border: "1px solid #514126" }}>
+                ログアウト
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );
