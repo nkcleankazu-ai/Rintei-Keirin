@@ -19,23 +19,30 @@ export default function MemberPage() {
   const [message, setMessage] = useState("読み込み中...");
 
   useEffect(() => {
-    async function loadMember() {
-      const { data: { user } } = await supabase.auth.getUser();
+    let active = true;
 
-      if (!user) {
-        router.replace("/login");
+    async function loadMember() {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
+
+      if (!active) return;
+
+      if (error || !user) {
+        setMessage("ログイン状態を確認できません。ログインし直してください。");
         return;
       }
 
       setEmail(user.email ?? "");
 
-      const { data, error } = await supabase
+      const { data, error: profileError } = await supabase
         .from("profiles")
         .select("display_name, coin_balance")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
-      if (error) {
+      if (!active) return;
+
+      if (profileError || !data) {
         setMessage("会員情報を読み込めませんでした。");
         return;
       }
@@ -45,12 +52,15 @@ export default function MemberPage() {
     }
 
     loadMember();
-  }, [router, supabase]);
+
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
 
   async function logout() {
     await supabase.auth.signOut();
-    router.replace("/login");
-    router.refresh();
+    window.location.href = "/login";
   }
 
   return (
