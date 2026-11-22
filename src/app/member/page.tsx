@@ -1,9 +1,7 @@
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Profile = {
@@ -12,7 +10,6 @@ type Profile = {
 };
 
 export default function MemberPage() {
-  const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [email, setEmail] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -73,6 +70,23 @@ export default function MemberPage() {
         <h1 style={{ color: "#d5ad55", textAlign: "center", marginTop: 45 }}>
           MEMBER PAGE
         </h1>
+
+        <Link
+          href="/"
+          style={{
+            display: "block",
+            maxWidth: 260,
+            margin: "0 auto 20px",
+            padding: 13,
+            textAlign: "center",
+            border: "1px solid #d5ad55",
+            color: "#d5ad55",
+            textDecoration: "none",
+            background: "#12100c",
+          }}
+        >
+          ← ホームに戻る
+        </Link>
 
         {message && <p style={{ textAlign: "center" }}>{message}</p>}
 
