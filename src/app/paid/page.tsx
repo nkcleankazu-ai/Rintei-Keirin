@@ -26,29 +26,53 @@ export default function PaidPage() {
   const [purchasedContent, setPurchasedContent] = useState("");
 
   useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
+    let active = true;
 
-      if (!user) {
+    async function load() {
+      const { data: { user }, error: authError } =
+        await supabase.auth.getUser();
+
+      if (!active) return;
+
+      if (authError || !user) {
         router.replace("/login");
         return;
       }
 
       const [{ data: profile }, { data: items, error }] = await Promise.all([
-        supabase.from("profiles").select("coin_balance").eq("id", user.id).single(),
+        supabase
+          .from("profiles")
+          .select("coin_balance")
+          .eq("id", user.id)
+          .single(),
         supabase.rpc("get_paid_predictions"),
       ]);
+
+      if (!active) return;
 
       if (profile) setBalance(profile.coin_balance);
       if (!error && items) setPredictions(items);
       if (error) setMessage("有料予想を読み込めませんでした。");
+
       setLoading(false);
     }
 
     load();
+
+    return () => {
+      active = false;
+    };
   }, [router, supabase]);
 
   async function buy(id: number) {
+    const { data: { user }, error: authError } =
+      await supabase.auth.getUser();
+
+    if (authError || !user) {
+      router.replace("/login");
+      return;
+    }
+
     setBusyId(id);
     setMessage("");
     setPurchasedContent("");
@@ -60,9 +84,11 @@ export default function PaidPage() {
     setBusyId(null);
 
     if (error) {
-      setMessage(error.message.includes("コインが不足")
-        ? "コインが不足しています。"
-        : "購入できませんでした。もう一度お試しください。");
+      setMessage(
+        error.message.includes("コインが不足")
+          ? "コインが不足しています。"
+          : "購入できませんでした。もう一度お試しください。"
+      );
       return;
     }
 
@@ -74,22 +100,35 @@ export default function PaidPage() {
     setPurchasedContent(data.content ?? "");
     setMessage("購入できました。予想内容を表示します。");
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("coin_balance")
-        .eq("id", user.id)
-        .single();
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("coin_balance")
+      .eq("id", user.id)
+      .single();
 
-      if (profile) setBalance(profile.coin_balance);
-    }
+    if (profile) setBalance(profile.coin_balance);
+  }
+
+  if (loading) {
+    return (
+      <main style={{
+        minHeight: "100vh",
+        background: "#080808",
+        color: "#d5ad55",
+        display: "grid",
+        placeItems: "center"
+      }}>
+        認証確認中...
+      </main>
+    );
   }
 
   return (
     <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: 22 }}>
       <div style={{ maxWidth: 750, margin: "auto" }}>
-        <Link href="/member" style={{ color: "#d5ad55" }}>← 会員ページへ戻る</Link>
+        <Link href="/member" style={{ color: "#d5ad55" }}>
+          ← 会員ページへ戻る
+        </Link>
 
         <h1 style={{ textAlign: "center", color: "#d5ad55", marginTop: 40, letterSpacing: 4 }}>
           PAID PREDICTION
@@ -103,9 +142,7 @@ export default function PaidPage() {
           </strong>
         </section>
 
-        {loading ? (
-          <p>読み込み中...</p>
-        ) : predictions.length === 0 ? (
+        {predictions.length === 0 ? (
           <p style={{ textAlign: "center", color: "#aaa", marginTop: 35 }}>
             現在公開中の有料予想はありません。
           </p>
@@ -117,7 +154,9 @@ export default function PaidPage() {
               </p>
               <h2 style={{ color: "#d5ad55" }}>{item.title}</h2>
               <p style={{ color: "#aaa" }}>{item.race_name}</p>
-              <p style={{ fontSize: 20 }}>{item.coin_cost.toLocaleString()} コイン</p>
+              <p style={{ fontSize: 20 }}>
+                {item.coin_cost.toLocaleString()} コイン
+              </p>
               <button
                 onClick={() => buy(item.id)}
                 disabled={busyId !== null}
@@ -129,12 +168,16 @@ export default function PaidPage() {
           ))
         )}
 
-        {message && <p style={{ color: "#d5ad55", marginTop: 20 }}>{message}</p>}
+        {message && (
+          <p style={{ color: "#d5ad55", marginTop: 20 }}>{message}</p>
+        )}
 
         {purchasedContent && (
           <section style={{ border: "1px solid #d5ad55", padding: 20, marginTop: 20 }}>
             <h2 style={{ color: "#d5ad55" }}>購入した予想内容</h2>
-            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>{purchasedContent}</div>
+            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>
+              {purchasedContent}
+            </div>
           </section>
         )}
       </div>
