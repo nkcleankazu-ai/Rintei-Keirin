@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Prediction = {
@@ -15,24 +16,50 @@ type Prediction = {
 
 export default function FreePage() {
   const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     async function loadPredictions() {
-      const { data } = await supabase
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (!active) return;
+
+      if (error || !user) {
+        router.replace("/login");
+        return;
+      }
+
+      const { data, error: predictionError } = await supabase
         .from("predictions")
         .select("id, title, race_name, race_date, content")
         .eq("coin_cost", 0)
         .eq("is_published", true)
         .order("created_at", { ascending: false });
 
-      setPredictions(data ?? []);
+      if (!active) return;
+
+      setPredictions(predictionError ? [] : data ?? []);
       setLoading(false);
     }
 
     loadPredictions();
-  }, [supabase]);
+
+    return () => {
+      active = false;
+    };
+  }, [supabase, router]);
+
+  if (loading) {
+    return (
+      <main style={{ minHeight: "100vh", background: "#080808", color: "#d5ad55", display: "grid", placeItems: "center" }}>
+        認証確認中...
+      </main>
+    );
+  }
 
   return (
     <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: 22 }}>
@@ -42,13 +69,9 @@ export default function FreePage() {
         <h1 style={{ textAlign: "center", color: "#d5ad55", marginTop: 45, letterSpacing: 4 }}>
           FREE PREDICTION
         </h1>
-        <p style={{ textAlign: "center", color: "#999" }}>
-          輪帝 無料予想
-        </p>
+        <p style={{ textAlign: "center", color: "#999" }}>輪帝 無料予想</p>
 
-        {loading ? (
-          <p style={{ textAlign: "center", marginTop: 40 }}>読み込み中...</p>
-        ) : predictions.length === 0 ? (
+        {predictions.length === 0 ? (
           <p style={{ textAlign: "center", color: "#aaa", marginTop: 40 }}>
             現在公開中の無料予想はありません。
           </p>
