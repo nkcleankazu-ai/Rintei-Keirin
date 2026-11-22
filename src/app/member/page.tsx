@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -19,8 +20,8 @@ export default function MemberPage() {
     let active = true;
 
     async function loadMember() {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      const user = session?.user ?? null;
+      // Supabase側でログイン状態を確認
+      const { data: { user }, error } = await supabase.auth.getUser();
 
       if (!active) return;
 
