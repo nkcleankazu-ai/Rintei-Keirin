@@ -1,59 +1,76 @@
-import Link from "next/link";
 
-const races = [
-  { time: "12:00 公開予定", title: "本日の注目レース 01", status: "サンプル予想", mark: "無料公開" },
-  { time: "15:00 公開予定", title: "本日の注目レース 02", status: "サンプル予想", mark: "無料公開" },
-];
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+type Prediction = {
+  id: number;
+  title: string;
+  race_name: string | null;
+  race_date: string | null;
+  content: string;
+};
 
 export default function FreePage() {
+  const supabase = useMemo(() => createClient(), []);
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadPredictions() {
+      const { data } = await supabase
+        .from("predictions")
+        .select("id, title, race_name, race_date, content")
+        .eq("coin_cost", 0)
+        .eq("is_published", true)
+        .order("created_at", { ascending: false });
+
+      setPredictions(data ?? []);
+      setLoading(false);
+    }
+
+    loadPredictions();
+  }, [supabase]);
+
   return (
-    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: "25px 18px" }}>
-      <style>{`
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #080808; }
-        a { text-decoration: none; }
-        .free-wrap { max-width: 850px; margin: auto; }
-        .free-logo { color: #d5ad55; font-size: 23px; font-weight: 900; letter-spacing: 4px; }
-        .free-title { text-align: center; color: #d5ad55; font-size: 32px; letter-spacing: 5px; margin: 65px 0 12px; }
-        .free-sub { text-align: center; color: #aaa293; font-size: 13px; margin-bottom: 35px; }
-        .free-card { border: 1px solid #514126; background: #12100c; padding: 23px; margin: 16px 0; }
-        .free-tag { display: inline-block; color: #080808; background: #d5ad55; padding: 5px 10px; font-size: 11px; font-weight: bold; }
-        .free-card h2 { font-size: 20px; margin: 18px 0 8px; }
-        .free-muted { color: #aaa293; font-size: 13px; line-height: 1.9; }
-        .free-button { display: inline-block; color: #d5ad55; border: 1px solid #806633; padding: 11px 18px; margin-top: 12px; font-size: 13px; }
-        .free-notice { border: 1px solid #493d29; padding: 18px; color: #aaa293; font-size: 12px; line-height: 1.9; margin-top: 28px; }
-      `}</style>
+    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: 22 }}>
+      <div style={{ maxWidth: 750, margin: "auto" }}>
+        <Link href="/" style={{ color: "#d5ad55" }}>← TOPへ戻る</Link>
 
-      <div className="free-wrap">
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #292319", paddingBottom: 18 }}>
-          <div className="free-logo">輪帝 <span style={{ fontSize: 11 }}>RINTEI</span></div>
-          <Link href="/" style={{ color: "#d5ad55", fontSize: 13 }}>TOPへ戻る</Link>
-        </header>
+        <h1 style={{ textAlign: "center", color: "#d5ad55", marginTop: 45, letterSpacing: 4 }}>
+          FREE PREDICTION
+        </h1>
+        <p style={{ textAlign: "center", color: "#999" }}>
+          輪帝 無料予想
+        </p>
 
-        <h1 className="free-title">FREE PREDICTION</h1>
-        <p className="free-sub">無料予想｜本日の注目レース</p>
+        {loading ? (
+          <p style={{ textAlign: "center", marginTop: 40 }}>読み込み中...</p>
+        ) : predictions.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#aaa", marginTop: 40 }}>
+            現在公開中の無料予想はありません。
+          </p>
+        ) : (
+          predictions.map((item) => (
+            <article key={item.id} style={{ border: "1px solid #514126", background: "#12100c", padding: 22, marginTop: 20 }}>
+              <p style={{ color: "#d5ad55", fontSize: 12 }}>
+                {item.race_date || "開催日未設定"}　/　無料予想
+              </p>
+              <h2 style={{ color: "#d5ad55" }}>{item.title}</h2>
+              <p style={{ color: "#aaa" }}>{item.race_name}</p>
+              <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>
+                {item.content}
+              </div>
+            </article>
+          ))
+        )}
 
-        {races.map((race, index) => (
-          <section className="free-card" key={race.title}>
-            <span className="free-tag">{race.mark}</span>
-            <h2>{race.title}</h2>
-            <p className="free-muted">{race.time}</p>
-            <p className="free-muted">{race.status}</p>
-            <p className="free-muted">
-              レース情報・出走表・ライン構成を確認のうえ、予想を公開します。
-            </p>
-            <div style={{ color: "#d5ad55", fontSize: 13, marginTop: 15 }}>
-              {index === 0 ? "12:00 更新枠" : "15:00 更新枠"}
-            </div>
-          </section>
-        ))}
-
-        <div className="free-notice">
-          ※現在表示している内容はページ見本です。実際の開催情報・予想・結果ではありません。実際のレース情報を確認してから公開します。
-        </div>
-
-        <div style={{ textAlign: "center", padding: "35px 0" }}>
-          <Link href="/paid" className="free-button">有料予想を見る →</Link>
+        <div style={{ textAlign: "center", marginTop: 40 }}>
+          <Link href="/paid" style={{ color: "#d5ad55" }}>
+            有料予想はこちら →
+          </Link>
         </div>
       </div>
     </main>
