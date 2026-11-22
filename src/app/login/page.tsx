@@ -31,8 +31,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/member");
-    router.refresh();
+    window.location.href = "/member";
   }
 
   async function handleSignup() {
