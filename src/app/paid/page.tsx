@@ -1,69 +1,142 @@
-import Link from "next/link";
 
-const plans = [
-  { coins: "150", name: "STANDARD", description: "注目レースの予想" },
-  { coins: "500", name: "PREMIUM", description: "勝負レースの予想" },
-  { coins: "1,000", name: "SPECIAL", description: "厳選レースの特別予想" },
-];
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+
+type Prediction = {
+  id: number;
+  title: string;
+  race_name: string | null;
+  race_date: string | null;
+  coin_cost: number;
+};
 
 export default function PaidPage() {
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
+
+  const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [balance, setBalance] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+  const [purchasedContent, setPurchasedContent] = useState("");
+
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (!user) {
+        router.replace("/login");
+        return;
+      }
+
+      const [{ data: profile }, { data: items, error }] = await Promise.all([
+        supabase.from("profiles").select("coin_balance").eq("id", user.id).single(),
+        supabase.rpc("get_paid_predictions"),
+      ]);
+
+      if (profile) setBalance(profile.coin_balance);
+      if (!error && items) setPredictions(items);
+      if (error) setMessage("有料予想を読み込めませんでした。");
+      setLoading(false);
+    }
+
+    load();
+  }, [router, supabase]);
+
+  async function buy(id: number) {
+    setBusyId(id);
+    setMessage("");
+    setPurchasedContent("");
+
+    const { data, error } = await supabase.rpc("purchase_prediction", {
+      p_prediction_id: id,
+    });
+
+    setBusyId(null);
+
+    if (error) {
+      setMessage(error.message.includes("コインが不足")
+        ? "コインが不足しています。"
+        : "購入できませんでした。もう一度お試しください。");
+      return;
+    }
+
+    if (!data?.success) {
+      setMessage("購入できませんでした。");
+      return;
+    }
+
+    setPurchasedContent(data.content ?? "");
+    setMessage("購入できました。予想内容を表示します。");
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("coin_balance")
+        .eq("id", user.id)
+        .single();
+
+      if (profile) setBalance(profile.coin_balance);
+    }
+  }
+
   return (
-    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: "25px 18px" }}>
-      <style>{`
-        * { box-sizing: border-box; }
-        body { margin: 0; background: #080808; }
-        a { text-decoration: none; }
-        .paid-wrap { max-width: 850px; margin: auto; }
-        .paid-logo { color: #d5ad55; font-size: 23px; font-weight: 900; letter-spacing: 4px; }
-        .paid-title { text-align: center; color: #d5ad55; font-size: 32px; letter-spacing: 5px; margin: 65px 0 12px; }
-        .paid-sub { text-align: center; color: #aaa293; font-size: 13px; margin-bottom: 35px; }
-        .paid-card { border: 1px solid #514126; background: linear-gradient(145deg,#17140f,#0c0c0c); padding: 25px; margin: 17px 0; text-align: center; }
-        .paid-name { color: #d5ad55; font-size: 12px; letter-spacing: 3px; }
-        .paid-coins { font-size: 38px; font-weight: 900; margin: 18px 0 8px; color: #f5f0e5; }
-        .paid-description { color: #aaa293; font-size: 13px; }
-        .paid-button { display: inline-block; color: #d5ad55; border: 1px solid #806633; padding: 11px 22px; margin-top: 18px; font-size: 13px; }
-        .paid-notice { border: 1px solid #493d29; padding: 18px; color: #aaa293; font-size: 12px; line-height: 1.9; margin-top: 28px; }
-      `}</style>
+    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: 22 }}>
+      <div style={{ maxWidth: 750, margin: "auto" }}>
+        <Link href="/member" style={{ color: "#d5ad55" }}>← 会員ページへ戻る</Link>
 
-      <div className="paid-wrap">
-        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #292319", paddingBottom: 18 }}>
-          <div className="paid-logo">輪帝 <span style={{ fontSize: 11 }}>RINTEI</span></div>
-          <Link href="/" style={{ color: "#d5ad55", fontSize: 13 }}>TOPへ戻る</Link>
-        </header>
+        <h1 style={{ textAlign: "center", color: "#d5ad55", marginTop: 40, letterSpacing: 4 }}>
+          PAID PREDICTION
+        </h1>
+        <p style={{ textAlign: "center", color: "#999" }}>有料予想</p>
 
-        <h1 className="paid-title">PAID PREDICTION</h1>
-        <p className="paid-sub">有料予想｜コインで購入</p>
-
-        {plans.map((plan) => (
-          <section className="paid-card" key={plan.coins}>
-            <div className="paid-name">{plan.name}</div>
-            <div className="paid-coins">{plan.coins} <span style={{ fontSize: 15, color: "#d5ad55" }}>COINS</span></div>
-            <p className="paid-description">{plan.description}</p>
-            <div style={{ color: "#8f887b", fontSize: 12, marginTop: 12 }}>
-              予想内容は公開前に実際のレース情報を確認します。
-            </div>
-            <span className="paid-button">購入機能準備中</span>
-          </section>
-        ))}
-
-        <section className="paid-card" style={{ marginTop: 35 }}>
-          <div className="paid-name">MONTHLY MEMBERSHIP</div>
-          <h2 style={{ color: "#d5ad55" }}>月額会員プラン</h2>
-          <div className="paid-coins">¥1,980<span style={{ fontSize: 14 }}> / 月（税込）</span></div>
-          <p className="paid-description">
-            毎月200コイン付与<br />
-            未使用コインは翌月へ繰り越し
-          </p>
-          <Link href="/login" className="paid-button">会員登録・ログイン</Link>
+        <section style={{ background: "#12100c", border: "1px solid #514126", padding: 20, marginTop: 25, textAlign: "center" }}>
+          <p style={{ color: "#999" }}>現在の保有コイン</p>
+          <strong style={{ color: "#d5ad55", fontSize: 30 }}>
+            {balance === null ? "---" : balance.toLocaleString()} COINS
+          </strong>
         </section>
 
-        <div className="paid-notice">
-          ※現在は表示見本です。コイン購入・決済・予想閲覧の制御はまだ接続されていません。実際の販売開始前に、利用条件・料金・返金条件などを整備します。
-        </div>
+        {loading ? (
+          <p>読み込み中...</p>
+        ) : predictions.length === 0 ? (
+          <p style={{ textAlign: "center", color: "#aaa", marginTop: 35 }}>
+            現在公開中の有料予想はありません。
+          </p>
+        ) : (
+          predictions.map((item) => (
+            <article key={item.id} style={{ border: "1px solid #514126", background: "#12100c", padding: 20, marginTop: 18 }}>
+              <p style={{ color: "#d5ad55", fontSize: 12 }}>
+                {item.race_date || "開催日未設定"}
+              </p>
+              <h2 style={{ color: "#d5ad55" }}>{item.title}</h2>
+              <p style={{ color: "#aaa" }}>{item.race_name}</p>
+              <p style={{ fontSize: 20 }}>{item.coin_cost.toLocaleString()} コイン</p>
+              <button
+                onClick={() => buy(item.id)}
+                disabled={busyId !== null}
+                style={{ width: "100%", padding: 15, background: "#d5ad55", color: "#080808", border: 0, fontWeight: "bold" }}
+              >
+                {busyId === item.id ? "購入処理中..." : "コインを使って購入"}
+              </button>
+            </article>
+          ))
+        )}
 
-        <div style={{ textAlign: "center", padding: "30px 0" }}>
-          <Link href="/free" style={{ color: "#d5ad55", fontSize: 13 }}>← 無料予想へ戻る</Link>
-        </div>
+        {message && <p style={{ color: "#d5ad55", marginTop: 20 }}>{message}</p>}
+
+        {purchasedContent && (
+          <section style={{ border: "1px solid #d5ad55", padding: 20, marginTop: 20 }}>
+            <h2 style={{ color: "#d5ad55" }}>購入した予想内容</h2>
+            <div style={{ whiteSpace: "pre-wrap", lineHeight: 1.9 }}>{purchasedContent}</div>
+          </section>
+        )}
       </div>
     </main>
   );
