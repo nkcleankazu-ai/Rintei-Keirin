@@ -42,8 +42,8 @@ export default function LoginPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/member`,
-      },
+        emailRedirectTo: `${router.replace("/member");
+router.refresh();      },
     });
 
     setLoading(false);
