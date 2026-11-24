@@ -21,8 +21,8 @@ export default function MemberPage() {
 
     async function loadMember() {
       // Supabase側でログイン状態を確認
-      const { data: { user }, error } = await supabase.auth.getUser();
-
+      const { data: { session }, error } = await supabase.auth.getSession();
+const user = session?.user ?? null;
       if (!active) return;
 
       if (error || !user) {
