@@ -30,8 +30,9 @@ export default function LoginPage() {
       setMessage("ログインできませんでした。メールアドレスとパスワードを確認してください。");
       return;
     }
-
-    window.location.href = "/member";
+router.replace("/member");
+router.refresh();
+    
   }
 
   async function handleSignup() {
@@ -42,9 +43,8 @@ export default function LoginPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${router.replace("/member");
-router.refresh();      },
-    });
+  emailRedirectTo: `${window.location.origin}/member`,
+},    });
 
     setLoading(false);
 
