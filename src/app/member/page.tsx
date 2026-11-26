@@ -20,9 +20,12 @@ export default function MemberPage() {
     let active = true;
 
     async function loadMember() {
-      // Supabase側でログイン状態を確認
-      const { data: { session }, error } = await supabase.auth.getSession();
-const user = session?.user ?? null;
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      const user = session?.user ?? null;
       if (!active) return;
 
       if (error || !user) {
@@ -62,13 +65,29 @@ const user = session?.user ?? null;
   }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#080808", color: "#f5f0e5", padding: 24 }}>
+    <main style={{
+      minHeight: "100vh",
+      background: "#080808",
+      color: "#f5f0e5",
+      padding: 24
+    }}>
       <div style={{ maxWidth: 650, margin: "auto" }}>
-        <div style={{ textAlign: "center", color: "#d5ad55", fontSize: 28, fontWeight: 900, letterSpacing: 5, marginTop: 30 }}>
+        <div style={{
+          textAlign: "center",
+          color: "#d5ad55",
+          fontSize: 28,
+          fontWeight: 900,
+          letterSpacing: 5,
+          marginTop: 30
+        }}>
           輪帝 RINTEI
         </div>
 
-        <h1 style={{ color: "#d5ad55", textAlign: "center", marginTop: 45 }}>
+        <h1 style={{
+          color: "#d5ad55",
+          textAlign: "center",
+          marginTop: 45
+        }}>
           MEMBER PAGE
         </h1>
 
@@ -83,35 +102,108 @@ const user = session?.user ?? null;
             border: "1px solid #d5ad55",
             color: "#d5ad55",
             textDecoration: "none",
-            background: "#12100c",
+            background: "#12100c"
           }}
         >
           ← ホームに戻る
         </Link>
 
-        {message && <p style={{ textAlign: "center" }}>{message}</p>}
+        {message && (
+          <p style={{ textAlign: "center" }}>{message}</p>
+        )}
 
         {profile && (
           <>
-            <section style={{ border: "1px solid #514126", background: "#12100c", padding: 24, marginTop: 25 }}>
-              <p style={{ color: "#999", fontSize: 12 }}>ログイン中のメールアドレス</p>
+            <section style={{
+              border: "1px solid #514126",
+              background: "#12100c",
+              padding: 24,
+              marginTop: 25
+            }}>
+              <p style={{ color: "#999", fontSize: 12 }}>
+                ログイン中のメールアドレス
+              </p>
               <p>{email}</p>
-              <p style={{ color: "#999", fontSize: 12, marginTop: 25 }}>会員名</p>
+
+              <p style={{
+                color: "#999",
+                fontSize: 12,
+                marginTop: 25
+              }}>
+                会員名
+              </p>
               <p>{profile.display_name || "会員"}</p>
-              <p style={{ color: "#999", fontSize: 12, marginTop: 25 }}>保有コイン</p>
-              <p style={{ color: "#d5ad55", fontSize: 34, fontWeight: 900 }}>
+
+              <p style={{
+                color: "#999",
+                fontSize: 12,
+                marginTop: 25
+              }}>
+                保有コイン
+              </p>
+              <p style={{
+                color: "#d5ad55",
+                fontSize: 34,
+                fontWeight: 900
+              }}>
                 {profile.coin_balance.toLocaleString()} COINS
               </p>
             </section>
 
-            <div style={{ display: "grid", gap: 12, marginTop: 25 }}>
-              <Link href="/free" style={{ padding: 16, textAlign: "center", background: "#292319", color: "#d5ad55", textDecoration: "none" }}>
+            <div style={{
+              display: "grid",
+              gap: 12,
+              marginTop: 25
+            }}>
+              <Link
+                href="/free"
+                style={{
+                  padding: 16,
+                  textAlign: "center",
+                  background: "#292319",
+                  color: "#d5ad55",
+                  textDecoration: "none"
+                }}
+              >
                 無料予想を見る
               </Link>
-              <Link href="/paid" style={{ padding: 16, textAlign: "center", background: "#292319", color: "#d5ad55", textDecoration: "none" }}>
-                有料予想・コイン購入
+
+              <Link
+                href="/paid"
+                style={{
+                  padding: 16,
+                  textAlign: "center",
+                  background: "#292319",
+                  color: "#d5ad55",
+                  textDecoration: "none"
+                }}
+              >
+                有料予想を見る
               </Link>
-              <button onClick={logout} style={{ padding: 14, background: "#111", color: "white", border: "1px solid #514126" }}>
+
+              <Link
+                href="/coins"
+                style={{
+                  padding: 16,
+                  textAlign: "center",
+                  background: "#514126",
+                  color: "#fff",
+                  textDecoration: "none",
+                  fontWeight: 700
+                }}
+              >
+                コインを追加購入する
+              </Link>
+
+              <button
+                onClick={logout}
+                style={{
+                  padding: 14,
+                  background: "#111",
+                  color: "white",
+                  border: "1px solid #514126"
+                }}
+              >
                 ログアウト
               </button>
             </div>
