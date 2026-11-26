@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     canonical: "https://rintei-keirin-qgwc.vercel.app",
   },
   verification: {
-    google: "F3JJk3VO2c2HJnGIbgzggxLa7JgawZfTAf9zIpVoTZY",
+    google: "Qj9PzPEMyqTWYkdCH99u9WphR5loqjoRrFSjt09MLQQ",
   },
   openGraph: {
     type: "website",
