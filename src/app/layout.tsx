@@ -30,14 +30,12 @@ export const metadata: Metadata = {
     url: "https://rintei-keirin-qgwc.vercel.app",
     siteName: "輪帝 RINTEI",
     title: "輪帝 RINTEI｜競輪予想・レース展開分析",
-    description:
-      "展開を読み、勝負を見極める。競輪予想情報サービス 輪帝。",
+    description: "展開を読み、勝負を見極める。競輪予想情報サービス 輪帝。",
   },
   twitter: {
     card: "summary",
     title: "輪帝 RINTEI｜競輪予想・レース展開分析",
-    description:
-      "展開を読み、勝負を見極める。競輪予想情報サービス 輪帝。",
+    description: "展開を読み、勝負を見極める。競輪予想情報サービス 輪帝。",
   },
   robots: {
     index: true,
