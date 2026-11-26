@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -23,9 +22,8 @@ export default function CoinsPage() {
         </h1>
 
         <p style={{ textAlign: "center", color: "#aaa" }}>コイン追加購入</p>
-
         <p style={{ textAlign: "center", color: "#aaa", lineHeight: 1.8 }}>
-          ご希望のコインプランをお選びください。決済機能は現在準備中です。
+          ご希望のコインプランをお選びください。
         </p>
 
         <div style={{ display: "grid", gap: 16, marginTop: 30 }}>
@@ -39,7 +37,7 @@ export default function CoinsPage() {
               <p style={{ color: "#d5ad55", letterSpacing: 3, fontWeight: 900 }}>
                 {plan.name}
               </p>
-              <p style={{ color: "#f5f0e5", fontSize: 30, fontWeight: 900, margin: "8px 0" }}>
+              <p style={{ fontSize: 30, fontWeight: 900, margin: "8px 0" }}>
                 {plan.coins.toLocaleString()} COINS
               </p>
               <p style={{ color: "#d5ad55", fontSize: 25, fontWeight: 900, margin: "8px 0 18px" }}>
@@ -54,15 +52,27 @@ export default function CoinsPage() {
                 fontWeight: 700,
                 opacity: 0.8
               }}>
-                決済準備中
+                オンライン決済準備中
               </button>
             </section>
           ))}
         </div>
 
+        <Link href="/bank-transfer" style={{
+          display: "block",
+          textAlign: "center",
+          padding: 17,
+          marginTop: 28,
+          background: "#d5ad55",
+          color: "#080808",
+          fontWeight: 900,
+          textDecoration: "none"
+        }}>
+          銀行振込でコインを購入する
+        </Link>
+
         <p style={{ color: "#888", fontSize: 12, lineHeight: 1.8, marginTop: 24 }}>
-          ※決済完了が確認された場合のみコインを付与します。
-          決済機能の公開前に、購入条件・返金条件をご案内します。
+          ※入金確認後にコインを付与します。振込申請のみではコインは付与されません。
         </p>
       </div>
     </main>
