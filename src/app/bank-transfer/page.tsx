@@ -97,7 +97,7 @@ export default function BankTransferPage() {
           </select>
           <p style={{ color: "#d5ad55", fontWeight: 700 }}>振込金額：¥{plan.price.toLocaleString()}（税込）</p>
           <label>振込名義（通帳に記載される名前）</label>
-          <input required value={transferName} onChange={e => setTransferName(e.target.value)} placeholder="例：イトウカズマサ" style={fieldStyle} />
+          <input required value={transferName} onChange={e => setTransferName(e.target.value)} placeholder="例：リンテイタロウ" style={fieldStyle} />
           <label>振込予定日</label>
           <input required type="date" value={transferDate} onChange={e => setTransferDate(e.target.value)} style={fieldStyle} />
           <button disabled={busy} type="submit" style={{ width: "100%", padding: 15, background: "#d5ad55", color: "#080808", border: 0, fontWeight: 800, opacity: busy ? 0.6 : 1 }}>
